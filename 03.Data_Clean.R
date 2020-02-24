@@ -17,7 +17,7 @@ non_na_ind <- list(); Firm_Size_list <- list(); Index_list <- list(); Productivi
 
 for(i in c(1:44)){
   print(i)
-  file_name <- paste("panels_J!&", paste(country_names[i], collapse=""), ".Rda", sep="")
+  file_name <- paste("panels_J!&", paste(country_names[i], collapse=""), ".Rda", sep="") #panels_J!& files are generated from the masterfile. 
   load(file_name)
   
   names(Cleaned_dat_Firm_Size)
@@ -78,7 +78,8 @@ save(All_list_Cleaned, country_names, file = "All_list_Cleaned.Rda") # save the 
 ## ------------------------------------------------------------------------
 ##  0.2 loading of required data and cleaning
 
-load("All_list_Cleaned.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
+load("All_list_Cleaned.Rda") 
+
 names(All_list_Cleaned[[1]])
 
 # Cleaning
@@ -86,7 +87,7 @@ All_list_Cleaned_cut <- list()
 for (k in 1:length(All_list_Cleaned)) {
   print(k)
   All_list_Cleaned_cut[[k]] <- All_list_Cleaned[[k]] %>%
-    select(IDNR, Year, COMPCAT, NACE_CAT, LSTATUS, EMPL, Firm_Age, LP, TFP, LP_lr, TFP_lr, LP_diff, TFP_diff, ZOMBIE) %>% # Firm ID, Year, Firm Size, Industry ID, Legal Status, Employment, Firm age, Labor Produtivity, TFP, LP log return, TFP log return, LP difference, TFP difference,  Zombie firm index
+    select(IDNR, Year, COMPCAT, NACE_CAT, NACE_PRIM_CODE, NACE_DES, LSTATUS, EMPL, Firm_Age, LP, CP, TFP, LP_lr, TFP_lr, LP_diff, TFP_diff, ZOMBIE, WS, SALE) %>% # Firm ID, Year, Firm Size, Industry ID,Industry ID2, Legal Status, Employment, Firm age, Labor Produtivity, Capital Productivity, TFP, LP log return, TFP log return, LP difference, TFP difference,  Zombie firm index, Wage Share, Sales
     mutate(COMPCAT_one = substr(COMPCAT, 1, 1)) %>% # the first letter of the size variable
     group_by(Year) %>%
     filter(length(IDNR) > 10000) %>% # Note that 23 countries out of 44 do not have VA info. Out of 21 countries, 15 countries have enough info for anlaysis (more than 5 years with 10,000 firms )
@@ -102,27 +103,28 @@ country_names <- country_names[take_this]
 ## ------------------------------------------------------------------------
 
 # This part of code is only for the old version of the masterfile where the dplyr lag function doesn't properly work
-for(k in 1:15){
-  print(k)
-  All_list_Cleaned_cut[[k]] <- All_list_Cleaned_cut[[k]]%>%
-    group_by(IDNR) %>%
-    arrange(Year) %>%
-    mutate(LP_diff = LP - lag(LP, 1, order_by = Year))
-}
-## ------------------------------------------------------------------------
+# for(k in 1:15){
+#   print(k)
+#   All_list_Cleaned_cut[[k]] <- All_list_Cleaned_cut[[k]]%>%
+#     group_by(IDNR) %>%
+#     arrange(Year) %>%
+#     mutate(LP_diff = LP - lag(LP, 1, order_by = Year))
+# }
+# ## ------------------------------------------------------------------------
 
 
 save(All_list_Cleaned_cut, file = "All_list_Cleaned_cut.Rda") # save the final object
-
-
 rm(All_list_Cleaned)
 
+#load("All_list_Cleaned_cut.Rda")
+
+names(All_list_Cleaned_cut[[1]])
 ## indexing variables
 # country index
 country_names_five <- c("France", "Germany", "Italy", "Spain", "United Kingdom") # country name for the five largest countries
 
 # industry index
-ind_name_table <- data.frame(ind_names = unique(All_list_Cleaned_cut[[15]]$NACE_CAT), 
+ind_name_table <- data.frame(ind_names = unique(All_list_Cleaned_cut[[15]]$NACE_CAT),
 ind_names_alphabet = c("J", "L", "G", "C", "I", "H", "S", "P", "M", "K", "B", "N", "A", "Q", "R", "F", "E", "O", "D", "T")) # alphabet index according to the appendix in the manuscript
 
 ind_name_table <- ind_name_table[order(ind_name_table$ind_names_alphabet),]
@@ -134,6 +136,10 @@ size_names <- c("S", "M", "L", "V") # size index short
 size_names_long <- c("SMALL", "MEDIUM SIZED", "LARGE", "VERY LARGE") # size index long
 names(size_names) <- 1:4 # create the numerical name for the size index
 
+#load("Labels.Rda")
+
 
 save(year_names, country_names, country_names_five, ind_name_table, size_names,  size_names_long, file = "Labels.Rda") 
+
+load("Labels.Rda")
 
