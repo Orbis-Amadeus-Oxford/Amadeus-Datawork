@@ -15,7 +15,7 @@ devtools::load_all("fittinglevy")
 ## 0.3 remaining function definitions: 
 # the fuction for the fitting result
 fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_cut, pov_cut) { # the function takes 8 arguments: 1) data generated and cleaned in section 0.2, 2) the number of bins, 3) the index of the variable that is used for the conditional class, 4) the target variable name, 5) the name of class, 6) the minimum number of observations for each class,  7) the cutting point on the left tail, 8) the cutting point on the right tail
-  results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), stringsAsFactors=FALSE)
+  results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), Levy_Soofi_ID=double(), stringsAsFactors=FALSE)
 
   c_uni_list <- list()
   c_uni_num_list <- list()
@@ -60,9 +60,9 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
         print(paste(length(c_uni), c))
         c_lp <- zz$Var[zz$Cond == c_uni_name[c]] # for each class
 
-        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_standarderror=TRUE, include_Soofi=FALSE, fitting_method="GMM") # Levy estimation
+        levy_result <- levy_fitting(dat_t = c_lp, bin_num = bin_num, include_standarderror=TRUE, include_Soofi=TRUE, fitting_method="GMM") # Levy estimation
         
-        results_df[nrow(results_df)+1,] = list(var_ind, cond_ind, c_uni_name[[c]], c, country_names[[k]], k, length(c_lp), levy_result$levy_para[[1]], levy_result$levy_para[[2]], levy_result$levy_para[[3]], levy_result$levy_para[[4]], levy_result$standard_errors[[1]], levy_result$standard_errors[[2]], levy_result$standard_errors[[3]], levy_result$standard_errors[[4]])    
+        results_df[nrow(results_df)+1,] = list(var_ind, cond_ind, c_uni_name[[c]], c, country_names[[k]], k, length(c_lp), levy_result$levy_para[[1]], levy_result$levy_para[[2]], levy_result$levy_para[[3]], levy_result$levy_para[[4]], levy_result$standard_errors[[1]], levy_result$standard_errors[[2]], levy_result$standard_errors[[3]], levy_result$standard_errors[[4]], levy_result$levy_soofi)    
         print(results_df)
         #results_df <- data.frame(Fit_Variable=character(), Separator_Variable=character(), Class=character(), class_idx=integer(), Country=character(), country_idx=integer(), Observations=integer(), Levy_alpha=double(), Levy_beta=double(), Levy_gamma=double(), Levy_delta=double(), Levy_alpha_Standard_Error=double(), Levy_beta_Standard_Error=double(), Levy_gamma_Standard_Error=double(), Levy_delta_Standard_Error=double(), stringsAsFactors=FALSE)
         #c_list[[c]] <- list(levy_para = levy_result$levy_para, levy_soofi = levy_result$levy_soofi, est_levy_std_error = levy_result$est_levy_std_error, data_mid = levy_result$data_mid , data_p = levy_result$data_p, levy_q = levy_result$levy_q)
@@ -81,9 +81,8 @@ fun_fit_levy <- function(dat, bin_num, cond_ind, var_ind, c_names, cut_num, neg_
 # main entry point
 
 ##  1.1. loading of required data and cleaning
-#load("All_list_Cleaned_cut.Rda") ## load the data file created from "Productivity_Analysis_Data.Rmd"
-load("All_list_Cleaned.Rda", verbose=T) ## load the data file created from "Productivity_Analysis_Data.Rmd"
-#load("Labels.Rda")
+load("Labels.Rda", verbose=T)
+load("All_list_Cleaned_cut.Rda", verbose=T) ## load the data file created from "Productivity_Analysis_Data.Rmd"
 
 
 
@@ -95,32 +94,31 @@ load("All_list_Cleaned.Rda", verbose=T) ## load the data file created from "Prod
 ## set up the cut-off point
 neg_cut <- 0.0025 # negative cut-off point
 pov_cut <- 0.9975 # positive cut-off point
-year_names <- 2006:2015
 
 ## Year class
 # LP conditional on year (year class)
-LP_year_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_year_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on year
-LP_Change_year_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_Change_year_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "Year", var_ind = "LP_diff", c_names = year_names, cut_num = 10000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_year_Levy_GMM_df_SE, LP_Change_year_Levy_GMM_df_SE, file = "Year_Levy_GMM_df_SE.Rda")
 
 ## Size class
 # LP conditional on size
-LP_size_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "COMPCAT", var_ind = "LP", c_names = size_names_long, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_size_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "COMPCAT", var_ind = "LP", c_names = size_names_long, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on size
-LP_Change_size_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "COMPCAT", var_ind = "LP_diff", c_names = size_names_long, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_Change_size_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "COMPCAT", var_ind = "LP_diff", c_names = size_names_long, cut_num = 5000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_size_Levy_GMM_df_SE, LP_Change_size_Levy_GMM_df_SE, file = "Size_Levy_GMM_df_SE.Rda")
 
 ## Industry class
 # LP conditional on sector
-LP_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP", c_names =  ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 # LP_change conditional on sector
-LP_Change_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP_diff", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
+LP_Change_ind_Levy_GMM_df_SE <- fun_fit_levy(dat = All_list_Cleaned_cut, bin_num = 100, cond_ind = "NACE_CAT", var_ind = "LP_diff", c_names = ind_name_table$ind_names, cut_num = 1000, neg_cut = neg_cut, pov_cut = pov_cut)
 
 save(LP_ind_Levy_GMM_df_SE, LP_Change_ind_Levy_GMM_df_SE, file = "Industry_Levy_GMM_df_SE.Rda")
 
